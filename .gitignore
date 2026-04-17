@@ -1,0 +1,10 @@
+rsa_key.p8
+rsa_key.pub
+*.pem
+profile.json
+!data/profile.json.template
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.log

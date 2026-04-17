@@ -1,0 +1,7 @@
+{
+    "user": "TML_INGEST_USER",
+    "account": "<ORG>-<ACCOUNT_NAME>",
+    "url": "https://<ORG>-<ACCOUNT_NAME>.snowflakecomputing.com:443",
+    "private_key_file": "/absolute/path/to/rsa_key.p8",
+    "role": "TML_INGEST_ROLE"
+}
