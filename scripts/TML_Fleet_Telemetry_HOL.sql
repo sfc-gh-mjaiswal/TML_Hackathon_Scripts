@@ -953,34 +953,81 @@ ORDER BY total_credits DESC;
 -- DROP TABLE IF EXISTS TML_FLEET_TELEMETRY_HOL.GOVERNANCE.CUSTOMER_VEHICLES;
 -- DROP SCHEMA IF EXISTS TML_FLEET_TELEMETRY_HOL.GOVERNANCE;
 
+/*
 
--- =============================================================
--- [14] DISCUSSION & LIVE Q&A
--- =============================================================
--- Take a moment to discuss what you've seen with the group.
--- Suggested questions:
---
---   ► How does the RAW → CURATED → BUSINESSREADY pipeline compare
---     to your current ETL architecture?
---
---   ► Which Cortex AI function (sentiment, summarize, classify,
---     translate, LLM complete) would add the most value to your
---     existing fleet operations?
---
---   ► How would the H3 geospatial road-segment join work with
---     your actual highway corridors and depot locations?
---
---   ► Does the per-customer RBAC + Row Access Policy model fit
---     your multi-tenant data isolation requirements?
---
---   ► What retention SLAs would you configure for raw vs curated
---     vs trip data in your production environment?
---
---   ► How could the real-time Interactive Table feed your
---     existing dashboards or alerting systems?
---
--- Ask your technical questions now — the floor is open!
+Building Streamlit app using Coco
+Build me a Streamlit in Snowflake dashboard app with the title "TML Fleet Telemetry Dashboard" and page icon 🚛 in wide layout. Use get_active_session() for the Snowflake connection. Use plotly.graph_objects and plotly.express for all charts. No matplotlib.
+Styling: Use custom CSS to style st.metric cards with light gradient backgrounds (#f8fafc to #e2e8f0), rounded borders (12px), and subtle shadows. Use these brand colors: TATA_BLUE=#003366, TATA_LIGHT=#0066CC, TATA_ACCENT=#00AAFF. All charts should have transparent backgrounds (plot_bgcolor and paper_bgcolor = "rgba(0,0,0,0)") and light gridlines (#f1f5f9).
+Sidebar: Add a CUSTOMER_ID filter dropdown that queries distinct CUSTOMER_ID from TML_FLEET_TELEMETRY_HOL.BUSINESSREADY.DRIVER_SCORECARD_V1 with an "All Customers" option. All queries should apply this filter as a WHERE clause.
 
+Data sources (4 tables):
+
+TML_FLEET_TELEMETRY_HOL.BUSINESSREADY.DRIVER_SCORECARD_V1 — columns: CUSTOMER_ID, VEHICLE_ID, TOTAL_TRIPS, AVG_FUEL_EFF, AVG_SPEED, TOP_SPEED, TOTAL_KM, TOTAL_FUEL_L, HEALTH_STATUS, MAX_DTC_COUNT, DRIVER_GRADE
+TML_FLEET_TELEMETRY_HOL.BUSINESSREADY.SPEED_ALERT_REPORT_V1 — columns: CUSTOMER_ID, VEHICLE_ID, TRIP_NUM, TRIP_START_TS, START_GEOFENCE, END_GEOFENCE, MAX_SPEED_KPH, AVG_SPEED_KPH, DISTANCE_KM, DURATION_MIN, SPEED_ALERT_LEVEL
+TML_FLEET_TELEMETRY.BUSINESSREADY.FLEET_HEALTH_DASHBOARD_V1 — columns: VEHICLE_ID, CUSTOMER_ID, HEALTH_STATUS, MINUTES_SINCE_LAST_EVENT, MAX_DTC_COUNT, HAS_CAN_BUS_ISSUES, HAS_TAMPER_ALERT, MAX_COOLANT_TEMP_C, MIN_BATTERY_VOLTAGE_V, AVG_GSM_SIGNAL_DBM, MAX_QUEUE_DEPTH, CURRENT_ODOMETER_KM, CURRENT_ENGINE_HOURS
+TML_FLEET_TELEMETRY.BUSINESSREADY.TRIP_SUMMARIES_V1 — columns: CUSTOMER_ID, VEHICLE_ID, TRIP_NUM, TRIP_START_TS, TRIP_END_TS, DURATION_SEC, DURATION_MIN, START_LAT, START_LON, END_LAT, END_LON, DISTANCE_KM, FUEL_CONSUMED_L, FUEL_EFFICIENCY_L_PER_100KM, AVG_SPEED_KPH, MAX_SPEED_KPH, AVG_ENGINE_RPM, AVG_ENGINE_LOAD_PCT, START_GEOFENCE, END_GEOFENCE
+Top KPI row (6 metrics): Total Vehicles, Total Trips, Avg Fuel Efficiency (L/100km), Total Distance (km), Speed Violations (with critical count as red delta), Warning Vehicles count.
+
+4 Tabs:
+
+Tab 1 "📊 Driver Scorecard": (2x2 grid)
+
+Bar chart: driver grade distribution (A-D) with colors: A-Excellent=#10B981, B-Good=#3B82F6, C-Needs Improvement=#F59E0B, D-At Risk=#EF4444. Text values on top.
+Bar chart: average fuel efficiency by driver grade, same colors.
+Scatter plot: AVG_SPEED (x) vs AVG_FUEL_EFF (y), colored by DRIVER_GRADE, sized by TOTAL_KM.
+Table: bottom 10 vehicles by worst fuel efficiency (highest AVG_FUEL_EFF).
+Tab 2 "⚡ Speed Alerts":
+
+3 metric cards: Critical (>100kph), High (>80kph), Moderate (>60kph) counts.
+Donut chart (hole=0.55) with total count annotation in center. Colors: CRITICAL=#EF4444, HIGH=#F59E0B, MODERATE=#3B82F6.
+Box plot: MAX_SPEED_KPH grouped by SPEED_ALERT_LEVEL.
+Multiselect filter for alert level, then a filterable dataframe sorted by MAX_SPEED_KPH desc.
+Tab 3 "🏥 Fleet Health":
+
+Metric cards per HEALTH_STATUS (HEALTHY=🟢, WARNING=🟡, CRITICAL=🔴) plus CAN Bus Issues count and Avg GSM signal.
+Donut chart of health status breakdown with colors: HEALTHY=#10B981, WARNING=#F59E0B, CRITICAL=#EF4444.
+Scatter plot: MAX_COOLANT_TEMP_C (x) vs MIN_BATTERY_VOLTAGE_V (y) colored by HEALTH_STATUS.
+Histogram of MAX_DTC_COUNT for vehicles with DTC > 0.
+Box plot: CURRENT_ODOMETER_KM by HEALTH_STATUS.
+Table: top 20 vehicles with WARNING/CRITICAL status sorted by MAX_DTC_COUNT desc.
+Tab 4 "🗺️ Trip Analytics":
+
+4 metric cards: Avg Distance, Avg Duration, Avg Fuel, Avg Speed.
+Histogram of DISTANCE_KM (30 bins, TATA_LIGHT color).
+Scatter plot: DISTANCE_KM (x) vs FUEL_EFFICIENCY_L_PER_100KM (y), color by AVG_SPEED_KPH using Blues color scale.
+Horizontal bar chart: top 10 routes by frequency (concat START_GEOFENCE → END_GEOFENCE, count trips).
+Table: top 10 trips by distance.
+*/ 
+
+
+/*
+
+Snowflake Intelligence
+
+/* Create a Semantic View + Agent on our HOL data and publish it to Snowflake Intelligence for natural language Q&A.
+*/
+-- Verify the agent
+DESCRIBE AGENT TML_FLEET_TELEMETRY_HOL.BUSINESSREADY.FLEET_HOL_AGENT;
+
+-- 16c. Test the agent with a question
+SELECT SNOWFLAKE.CORTEX.DATA_AGENT_RUN(
+    'TML_FLEET_TELEMETRY_HOL.BUSINESSREADY.FLEET_HOL_AGENT',
+    'How many vehicles are in each driver grade? Show as a chart.'
+);
+-- 16d. ACCESS FROM SNOWFLAKE INTELLIGENCE
+-- The agent is now available in Snowflake Intelligence.
+-- Navigate to: Snowsight → AI & ML → Snowflake Intelligence
+-- Click "New Chat" and select "Fleet HOL Agent"
+-- Try these questions:
+--   • "Which customers have the most speed violations?"
+--   • "Show me fleet health breakdown by status"
+--   • "What are the top 10 longest trips?"
+--   • "Find dashcam events involving collision on NH44"
+--   • "Compare fuel efficiency across driver grades"
+
+
+
+*/
 
 /***********************************************************************
   END OF HANDS-ON LAB
