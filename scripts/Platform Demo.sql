@@ -1,7 +1,6 @@
 /***********************************************************************
   ❄️ SNOWFLAKE PLATFORM OVERVIEW — TATA MOTORS LIMITED
   ---------------------------------------------------------------
-  Presenter : Manisha Jaiswal
   Audience  : Tata Motors (Technical + Business Stakeholders)
   Duration  : 15–20 minutes
   Interface : Snowsight UI only
@@ -77,7 +76,10 @@ USE WAREHOUSE TML_ANALYTICS_WH;
 --  on demand. You only pay when it's running."
 
 -- 2b. Scale UP (more power) — instant resize, no downtime
--- ALTER WAREHOUSE TML_ANALYTICS_WH SET WAREHOUSE_SIZE = 'MEDIUM';
+ALTER WAREHOUSE TML_ANALYTICS_WH SET WAREHOUSE_SIZE = 'MEDIUM';
+
+-- 2b-ii. Scale DOWN (right-size after peak) — instant, no downtime
+ALTER WAREHOUSE TML_ANALYTICS_WH SET WAREHOUSE_SIZE = 'XSMALL';
 
 -- 2c. Scale OUT (more concurrency) — multi-cluster
 ALTER WAREHOUSE TML_ANALYTICS_WH SET 
@@ -98,9 +100,9 @@ ALTER WAREHOUSE TML_ANALYTICS_WH SET
 --  for AI/ML training and container services for custom apps — 
 --  all managed, all within the same security perimeter."
 
-CREATE COMPUTE POOL TML_GPU_POOL 
-MIN_NODES = 1 MAX_NODES = 3 
-  INSTANCE_FAMILY = GPU_NV_S;
+--CREATE COMPUTE POOL TML_GPU_POOL 
+--MIN_NODES = 1 MAX_NODES = 3 
+ -- INSTANCE_FAMILY = GPU_NV_S;
 
 -- 👉 [UI] Navigate to: Manage → Compute → Compute Pools (show the page)
 
